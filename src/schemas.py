@@ -1,8 +1,11 @@
-from pydantic import BaseModel
+from typing import Optional
+
+from pydantic import BaseModel, EmailStr
 
 
 class CreateUserReuest(BaseModel):
     full_name: str
-    email: str
+    email: Optional[EmailStr]
     password: str
-    is_teacher: bool
+    role: str
+    is_superuser: bool

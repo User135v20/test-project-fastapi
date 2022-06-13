@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import relationship
 from database import Base
@@ -9,4 +10,9 @@ class User(Base):
     full_name = Column(String, index=True)
     email = Column(String, nullable=False)
     password = Column(String, nullable=False)
-    is_teacher = Column(Boolean(), default=True)
+    role = Column(String, nullable=False)
+    is_superuser = Column(Boolean, default=False)
+
+class AuthModel(BaseModel):
+    email: str
+    password: str
