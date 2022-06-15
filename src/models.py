@@ -1,7 +1,5 @@
-from pydantic import BaseModel
 from sqlalchemy import Boolean, Column, Integer, String
-from sqlalchemy.orm import relationship
-from database import Base
+from db.database import Base
 
 
 class User(Base):
@@ -13,6 +11,3 @@ class User(Base):
     role = Column(String, nullable=False)
     is_superuser = Column(Boolean, default=False)
 
-class AuthModel(BaseModel):
-    email: str
-    password: str

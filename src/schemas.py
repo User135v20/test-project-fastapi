@@ -9,3 +9,13 @@ class CreateUserReuest(BaseModel):
     password: str
     role: str
     is_superuser: bool
+
+
+class AuthModel(BaseModel):
+    email: str
+    password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
