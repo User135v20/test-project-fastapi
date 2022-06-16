@@ -17,13 +17,42 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        'users',
+        'admin',
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("full_name", sa.String(), nullable=True),
+        sa.Column("email", sa.String(), nullable=True),
+        sa.Column("password", sa.String(), nullable=True)
+    )
+
+    op.create_table(
+        'student',
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("full_name", sa.String(), nullable=True),
+        sa.Column("email", sa.String(), nullable=True),
+        sa.Column("password", sa.String(), nullable=True)
+    )
+
+    op.create_table(
+        'teacher',
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("full_name", sa.String(), nullable=True),
         sa.Column("email", sa.String(), nullable=True),
         sa.Column("password", sa.String(), nullable=True),
-        sa.Column("role", sa.String(), nullable=True),
-        sa.Column("is_superuser", sa.Boolean(), nullable=True)
+        sa.Column("language", sa.String(), nullable=True),
+    )
+
+    op.create_table(
+        'timetable',
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("student", sa.String(), nullable=True),
+        sa.Column("teacher", sa.String(), nullable=True),
+        sa.Column("day", sa.String(), nullable=True)
+    )
+
+    op.create_table(
+        'language',
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("language", sa.String(), nullable=True),
     )
 
 

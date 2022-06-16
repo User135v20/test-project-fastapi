@@ -8,11 +8,12 @@ class CreateUserReuest(BaseModel):
     email: Optional[EmailStr]
     password: str
     role: str
-    is_superuser: bool
+    language: Optional[str] = None
+    is_superuser: Optional[bool] = False
 
 
 class AuthModel(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 
