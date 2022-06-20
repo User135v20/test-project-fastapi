@@ -1,9 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from core.by_token import find_user_by_token
 from core.logic import find_user_by_email, add_users
-from core.security import create_access_token, password_verification, check_token
+from core.security import password_verification, create_access_token, check_token
 from db.database import get_db
-from schemas import CreateUserReuest, AuthModel, Token
+from schemas import CreateUserReuest, Token
 
 app = FastAPI()
 
@@ -13,10 +15,10 @@ def create(detail: CreateUserReuest, db: Session = Depends(get_db)):
     return add_users(detail, db)
 
 
-@app.post('/login')
-def login(detail: AuthModel, db: Session = Depends(get_db)):
+@app.post('/token', response_model=Token)
+def login(db: Session = Depends(get_db), detail: OAuth2PasswordRequestForm = Depends()):
     try:
-        user_by_email = find_user_by_email(detail.email, db)
+        user_by_email = find_user_by_email(detail.username, db)
         if user_by_email is None:
             raise
         user = user_by_email[0]
@@ -32,3 +34,8 @@ def login(detail: AuthModel, db: Session = Depends(get_db)):
 @app.post('/check_token')
 def check_user_token(detail: str):
     return check_token(detail)
+
+
+@app.post('/to_book')
+def make_an_appointments(user: CreateUserReuest = Depends(find_user_by_token)):
+    return user[0]  # .id

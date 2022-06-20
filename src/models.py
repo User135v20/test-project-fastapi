@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Column, Integer, String
 from db.database import Base
 
 
@@ -23,7 +23,7 @@ class Teacher(Base):
     full_name = Column(String, nullable=False)
     email = Column(String, nullable=False)
     password = Column(String, nullable=False)
-    language = Column(String, nullable=True)
+    language = Column(Integer)
 
 
 class Language(Base):
