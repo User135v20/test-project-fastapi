@@ -50,7 +50,7 @@ def upgrade():
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("student", sa.String(), nullable=True),
         sa.Column("teacher", sa.String(), nullable=True),
-        sa.Column("day", sa.String(), nullable=True)
+        sa.Column("day", sa.Date, nullable=True)
     )
 
     #op.drop_table('language')

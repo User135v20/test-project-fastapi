@@ -1,39 +1,39 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, DateTime
 from db.database import Base
 
 
 class Admin(Base):
     __tablename__ = 'admin'
     id = Column(Integer, primary_key=True)
-    full_name = Column(String, nullable=False)
-    email = Column(String, nullable=False)
-    password = Column(String, nullable=False)
+    full_name = Column(String)
+    email = Column(String)
+    password = Column(String)
 
 
 class Student(Base):
     __tablename__ = 'student'
     id = Column(Integer, primary_key=True)
-    full_name = Column(String, nullable=False)
-    email = Column(String, nullable=False)
-    password = Column(String, nullable=False)
+    full_name = Column(String)
+    email = Column(String)
+    password = Column(String)
 
 class Teacher(Base):
     __tablename__ = 'teacher'
     id = Column(Integer, primary_key=True)
-    full_name = Column(String, nullable=False)
-    email = Column(String, nullable=False)
-    password = Column(String, nullable=False)
+    full_name = Column(String)
+    email = Column(String)
+    password = Column(String)
     language = Column(Integer)
 
 
 class Language(Base):
     __tablename__ = 'language'
     id = Column(Integer, primary_key=True)
-    language = Column(String, nullable=False)
+    language = Column(String)
 
 class Timetable(Base):
     __tablename__ = 'timetable'
     id = Column(Integer, primary_key=True)
-    student = Column(String, nullable=False)
-    teacher = Column(String, nullable=False)
-    day = Column(String, nullable=False)
+    student = Column(String)
+    teacher = Column(String)
+    day = Column(DateTime)

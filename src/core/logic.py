@@ -72,17 +72,27 @@ def add_users(detail: CreateUserReuest, db: Session):
         return 'Failed to signup user'
 
 
-def find_user_by_email(email: str, db: Session, role=None):
-    def search(mail: str, md: Base):
-        return db.query(md).filter(md.email == mail).first()
+def search(mail: str, md: Base, db: Session):
+    return db.query(md).filter(md.email == mail).first()
 
+
+def find_user_and_role_by_email(email: str, db: Session):
+    for value in DICT_ROLE_MODEL_FUNC.values():
+        model = value[1]
+        search_result = search(email, model, db)
+        if search_result is not None:
+            return [search_result, value[0]]
+    return None
+
+
+def find_user_by_email(email: str, db: Session, role=None):
     if role is None:
         for value in DICT_ROLE_MODEL_FUNC.values():
             model = value[1]
-            search_result = search(email, model)
+            search_result = search(email, model, db)
             if search_result is not None:
-                return [search_result, value[0]]
+                return search_result
     else:
         model = DICT_ROLE_MODEL_FUNC[role][1]
-        search_result = search(email, model)
-    return None if search_result is None else [search_result, role]
+        search_result = search(email, model, db)
+    return None if search_result is None else search_result
