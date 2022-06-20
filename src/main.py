@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from core.by_token import find_user_by_token
+from core.by_token import to_book_by_token
 from core.logic import find_user_by_email, add_users
 from core.security import password_verification, create_access_token, check_token
 from db.database import get_db
@@ -37,5 +37,5 @@ def check_user_token(detail: str):
 
 
 @app.post('/to_book')
-def make_an_appointments(user: CreateUserReuest = Depends(find_user_by_token)):
-    return user[0]  # .id
+def make_an_appointments(user: CreateUserReuest = Depends(to_book_by_token)):
+    return user

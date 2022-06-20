@@ -5,8 +5,8 @@ from models import Student, Teacher, Admin, Language
 from schemas import CreateUserReuest
 
 
-def add_into_db(user: Base, db: Session):
-    db.add(user)
+def add_into_db(data: Base, db: Session):
+    db.add(data)
     db.commit()
 
 
