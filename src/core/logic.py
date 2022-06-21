@@ -10,6 +10,11 @@ def add_into_db(data: Base, db: Session):
     db.commit()
 
 
+def delete_in_db(data, db: Session):
+    db.delete(data)
+    db.commit()
+
+
 def create_admin_data(detail: CreateUserReuest, db: Session):
     user = Admin(
         full_name=detail.full_name,
@@ -96,3 +101,17 @@ def find_user_by_email(email: str, db: Session, role=None):
         model = DICT_ROLE_MODEL_FUNC[role][1]
         search_result = search(email, model, db)
     return None if search_result is None else search_result
+
+
+def teachers_list(db: Session, language=None):
+    model = Teacher
+    if language is None:
+        search_result = db.query(model).filter(model.language is not None).all()
+    else:
+        id_language= id_from_the_language_table(language, db)
+        search_result = db.query(model).filter(model.language == id_language).all()
+    return None if search_result is None else search_result
+
+
+def get_language(db: Session, id_language):
+    return db.query(Language).filter(Language.id == id_language).first().language

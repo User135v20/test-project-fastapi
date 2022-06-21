@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from core.by_token import to_book_by_token, list_of_classes_for_a_student
+from core.by_token import to_book, list_of_classes_for_a_student, cancel_a_booked_lesson, find_free_teachers
 from core.logic import add_users, find_user_and_role_by_email
 from core.security import password_verification, create_access_token, check_token
 from db.database import get_db
@@ -37,11 +37,21 @@ def check_user_token(detail: str):
 
 
 @app.post('/student/to_book')
-def make_an_appointments(user: CreateUserReuest = Depends(to_book_by_token)):
+def make_an_appointments(user: CreateUserReuest = Depends(to_book)):
     return user
 
 
 @app.post('/student/list_of_classes')
 def list_of_classes(user: CreateUserReuest = Depends(list_of_classes_for_a_student)):
     return user
+
+@app.post('/student/cancel_lesson')
+def cancel_lesson(user: CreateUserReuest = Depends(cancel_a_booked_lesson)):
+    return user
+
+
+@app.post('/student/free_teacher')
+def list_of_available_teachers(list_teachers: CreateUserReuest = Depends(find_free_teachers)):
+    return list_teachers
+
 
