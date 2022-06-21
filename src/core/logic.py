@@ -1,9 +1,13 @@
+from datetime import datetime
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt
 from sqlalchemy.orm import Session
-from core.security import hash_password
+from core.security import hash_password, ALGORITHM, SECRET_KEY
 from db.database import Base
-from models import Student, Teacher, Admin, Language
+from models import Student, Teacher, Admin, Language, Timetable
 from schemas import CreateUserReuest
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def add_into_db(data: Base, db: Session):
     db.add(data)
@@ -15,7 +19,7 @@ def delete_in_db(data, db: Session):
     db.commit()
 
 
-def create_admin_data(detail: CreateUserReuest, db: Session):
+def create_admin(detail: CreateUserReuest, db: Session):
     user = Admin(
         full_name=detail.full_name,
         email=detail.email,
@@ -25,7 +29,7 @@ def create_admin_data(detail: CreateUserReuest, db: Session):
     return user
 
 
-def create_student_data(detail: CreateUserReuest, db: Session):
+def create_student(detail: CreateUserReuest, db: Session):
     user = Student(
         full_name=detail.full_name,
         email=detail.email,
@@ -35,7 +39,11 @@ def create_student_data(detail: CreateUserReuest, db: Session):
     return user
 
 
-def id_from_the_language_table(language: str, db: Session):
+def get_language(db: Session, id_language):
+    return db.query(Language).filter(Language.id == id_language).first().language
+
+
+def get_language_id(language: str, db: Session):
     search_result = db.query(Language).filter(Language.language == language).first()
     if search_result is None:
         db.add(Language(language=language))
@@ -44,21 +52,30 @@ def id_from_the_language_table(language: str, db: Session):
     return search_result.id
 
 
-def create_teacher_data(detail: CreateUserReuest, db: Session):
+def create_teacher(detail: CreateUserReuest, db: Session):
     user = Teacher(
         full_name=detail.full_name,
         email=detail.email,
         password=hash_password(detail.password),
-        language=id_from_the_language_table(detail.language, db)
+        language=get_language_id(detail.language, db)
     )
     add_into_db(user, db)
     return user
 
 
+def create_schedule_entry(student: str, teacher: str, day: str, db):
+    data = Timetable(
+        student=student,
+        teacher=teacher,
+        day=datetime.strptime(day, '%Y-%m-%d'))
+    add_into_db(data, db)
+    return data
+
+
 DICT_ROLE_MODEL_FUNC = \
-    {"admin": ["admin", Admin, create_admin_data],
-     "student": ["student", Student, create_student_data],
-     "teacher": ["teacher", Teacher, create_teacher_data]
+    {"admin": ["admin", Admin, create_admin],
+     "student": ["student", Student, create_student],
+     "teacher": ["teacher", Teacher, create_teacher]
      }
 
 
@@ -108,10 +125,49 @@ def teachers_list(db: Session, language=None):
     if language is None:
         search_result = db.query(model).filter(model.language is not None).all()
     else:
-        id_language= id_from_the_language_table(language, db)
+        id_language = get_language_id(language, db)
         search_result = db.query(model).filter(model.language == id_language).all()
     return None if search_result is None else search_result
 
 
-def get_language(db: Session, id_language):
-    return db.query(Language).filter(Language.id == id_language).first().language
+def find_user_by_token(token: str, role, db: Session):
+    payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
+    try:
+        checking_for_access_rights(token, role)
+        token_role = payload.get("role")
+        email = payload.get("email")
+        return find_user_by_email(email, db, token_role)
+    except:
+        raise Exception('invalid token')
+
+
+def checking_for_access_rights(token, role):
+    if role != jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM).get("role"):
+        raise Exception('no access rights')
+
+
+def check_to_date_param(from_date, to_date):
+    if to_date is not None and datetime.strptime(to_date, '%Y-%m-%d') < datetime.strptime(from_date, '%Y-%m-%d'):
+        raise Exception('invalid to_date parameter')
+    return from_date if to_date is None else to_date
+
+
+DICT_STUDENT_TEACHER = \
+    {
+        "student": Timetable.student,
+        "teacher": Timetable.teacher
+    }
+
+
+def check_timetable(user, role, db: Session, from_date, to_date):
+    md = Timetable
+    to_date = check_to_date_param(from_date, to_date)
+    return db.query(md).filter(DICT_STUDENT_TEACHER.get(role) == user, md.day >= from_date, md.day <= to_date).order_by(
+        md.day.asc()).all()
+
+
+def get_timetable(token, db, role, from_date, to_date):
+    checking_for_access_rights(token, role)
+    user = find_user_by_token(token, role, db)
+    timetable = check_timetable(user.email, role, db, from_date, to_date)
+    return timetable
