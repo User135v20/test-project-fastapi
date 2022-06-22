@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from core.for_students import to_book, list_of_classes_for_student, cancel_a_booked_lesson, find_free_teachers
-from core.for_teachers import list_of_classes_for_teacher, add_language
+from core.for_students import to_book, list_of_classes_for_student, find_free_teachers, cancel_a_booked_lesson_student
+from core.for_teachers import list_of_classes_for_teacher, add_language, cancel_a_booked_lesson_teacher, remove_language
 from core.logic import add_users, find_user_and_role_by_email
 from core.security import password_verification, create_access_token, check_token
 from db.database import get_db
@@ -46,8 +46,9 @@ def make_an_appointments(user: CreateUserReuest = Depends(to_book)):
 def list_of_classes(user: CreateUserReuest = Depends(list_of_classes_for_student)):
     return user
 
+
 @app.post('/student/cancel_lesson')
-def cancel_lesson(user: CreateUserReuest = Depends(cancel_a_booked_lesson)):
+def cancel_lesson(user: CreateUserReuest = Depends(cancel_a_booked_lesson_student)):
     return user
 
 
@@ -56,7 +57,7 @@ def list_of_available_teachers(list_classes: CreateUserReuest = Depends(find_fre
     return list_classes
 
 
-@app.post('/teacher/free_teacher')
+@app.post('/teacher/list_of_classes')
 def list_of_available_teachers(list_classes: CreateUserReuest = Depends(list_of_classes_for_teacher)):
     return list_classes
 
@@ -66,3 +67,11 @@ def add_languages(res: CreateUserReuest = Depends(add_language)):
     return res
 
 
+@app.post('/teacher/remove_language')
+def add_languages(res: CreateUserReuest = Depends(remove_language)):
+    return res
+
+
+@app.post('/teacher/cancel_lesson')
+def cancel_lesson(user: CreateUserReuest = Depends(cancel_a_booked_lesson_teacher)):
+    return user

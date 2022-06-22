@@ -14,6 +14,11 @@ def add_into_db(data: Base, db: Session):
     db.commit()
 
 
+def delete_by_id(id, model, db):
+    db.query(model).filter_by(id= id).delete(synchronize_session=False)
+    db.commit()
+
+
 def delete_in_db(data, db: Session):
     db.delete(data)
     db.commit()
@@ -137,13 +142,13 @@ def find_user_by_token(token: str, role, db: Session):
         token_role = payload.get("role")
         email = payload.get("email")
         return find_user_by_email(email, db, token_role)
-    except:
-        raise Exception('invalid token')
+    except Exception as err:
+        raise err
 
 
 def checking_for_access_rights(token, role):
     if role != jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM).get("role"):
-        raise Exception('no access rights')
+        raise Exception('registered user does not have the right to this action')
 
 
 def check_to_date_param(from_date, to_date):
@@ -152,22 +157,40 @@ def check_to_date_param(from_date, to_date):
     return from_date if to_date is None else to_date
 
 
-DICT_STUDENT_TEACHER = \
-    {
-        "student": Timetable.student,
-        "teacher": Timetable.teacher
-    }
-
-
-def check_timetable(user, role, db: Session, from_date, to_date):
+def check_timetable(user, role, db: Session, from_date, to_date=None):
+    dict_student_teacher = \
+        {
+            "student": Timetable.student,
+            "teacher": Timetable.teacher
+        }
     md = Timetable
     to_date = check_to_date_param(from_date, to_date)
-    return db.query(md).filter(DICT_STUDENT_TEACHER.get(role) == user, md.day >= from_date, md.day <= to_date).order_by(
+    return db.query(md).filter(dict_student_teacher.get(role) == user, md.day >= from_date, md.day <= to_date).order_by(
         md.day.asc()).all()
 
 
 def get_timetable(token, db, role, from_date, to_date):
-    checking_for_access_rights(token, role)
     user = find_user_by_token(token, role, db)
     timetable = check_timetable(user.email, role, db, from_date, to_date)
     return timetable
+
+
+def cancel_lesson(date, role, db: Session, token: str):
+    try:
+        dict_user_teacher = {
+            "student": Student.email,
+            "teacher": Teacher.email
+        }
+        find_user_by_token(token, role, db)
+        timetable = check_timetable(dict_user_teacher.get(role), role, db, from_date=date)
+        if len(timetable) < 1:
+            return 'there were no classes scheduled that day'
+        delete_in_db(timetable[0], db)
+        delete_by_id(timetable[0].id, Timetable, db)
+        return date + ' is free'
+    except Exception as err:
+        return err.args
+
+
+def get_teacher_id_by_email_and_lang(email: str, language, db: Session):
+    return db.query(Teacher).filter(Teacher.email == email, Teacher.language == language).first().id
