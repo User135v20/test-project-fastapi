@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from core.for_admin import get_list_teachers, get_list_students, get_book_list, teacher_statistic
 from core.for_students import to_book, list_of_classes_for_student, find_free_teachers, cancel_a_booked_lesson_student
 from core.for_teachers import list_of_classes_for_teacher, add_language, cancel_a_booked_lesson_teacher, remove_language
 from core.logic import add_users, find_user_and_role_by_email
-from core.security import password_verification, create_access_token, check_token
+from core.security import password_verification, create_access_token
 from db.database import get_db
 from schemas import CreateUserReuest, Token
 
@@ -30,11 +31,6 @@ def login(db: Session = Depends(get_db), detail: OAuth2PasswordRequestForm = Dep
         return {'access_token': access_token, "token_type": "bearer", }
     except:
         return HTTPException(status_code=401, detail='Invalid email')
-
-
-@app.post('/check_token')
-def check_user_token(detail: str):
-    return check_token(detail)
 
 
 @app.post('/student/to_book')
@@ -63,15 +59,34 @@ def list_of_available_teachers(list_classes: CreateUserReuest = Depends(list_of_
 
 
 @app.post('/teacher/add_language')
-def add_languages(res: CreateUserReuest = Depends(add_language)):
-    return res
+def add_languages(result: CreateUserReuest = Depends(add_language)):
+    return result
 
 
 @app.post('/teacher/remove_language')
-def add_languages(res: CreateUserReuest = Depends(remove_language)):
-    return res
+def add_languages(result: CreateUserReuest = Depends(remove_language)):
+    return result
 
 
 @app.post('/teacher/cancel_lesson')
-def cancel_lesson(user: CreateUserReuest = Depends(cancel_a_booked_lesson_teacher)):
-    return user
+def cancel_lesson(result: CreateUserReuest = Depends(cancel_a_booked_lesson_teacher)):
+    return result
+
+
+@app.post('/admin/list_teachers')
+def list_teachers(users: CreateUserReuest = Depends(get_list_teachers)):
+    return users
+
+@app.post('/admin/list_students')
+def list_teachers(users: CreateUserReuest = Depends(get_list_students)):
+    return users
+
+@app.post('/admin/books')
+def list_teachers(data: CreateUserReuest = Depends(get_book_list)):
+    return data
+
+
+@app.post('/admin/statistics')
+def statistic(data: CreateUserReuest = Depends(teacher_statistic)):
+    return data
+

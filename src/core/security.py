@@ -27,9 +27,3 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-
-def check_token(token: str):
-    payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
-    role = payload.get("role")
-    email = payload.get("email")
-    return role + "|" + email

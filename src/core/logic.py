@@ -9,13 +9,14 @@ from schemas import CreateUserReuest
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+
 def add_into_db(data: Base, db: Session):
     db.add(data)
     db.commit()
 
 
 def delete_by_id(id, model, db):
-    db.query(model).filter_by(id= id).delete(synchronize_session=False)
+    db.query(model).filter_by(id=id).delete(synchronize_session=False)
     db.commit()
 
 
@@ -126,12 +127,18 @@ def find_user_by_email(email: str, db: Session, role=None):
 
 
 def teachers_list(db: Session, language=None):
-    model = Teacher
+    model=Teacher
     if language is None:
         search_result = db.query(model).filter(model.language is not None).all()
     else:
         id_language = get_language_id(language, db)
         search_result = db.query(model).filter(model.language == id_language).all()
+    return None if search_result is None else search_result
+
+
+def student_list(db: Session):
+    model=Student
+    search_result = db.query(model).all()
     return None if search_result is None else search_result
 
 
@@ -192,5 +199,42 @@ def cancel_lesson(date, role, db: Session, token: str):
         return err.args
 
 
-def get_teacher_id_by_email_and_lang(email: str, language, db: Session):
-    return db.query(Teacher).filter(Teacher.email == email, Teacher.language == language).first().id
+def get_teacher_by_email_and_lang(email: str, language, db: Session):
+    language_id = get_language_id(language, db)
+    return db.query(Teacher).filter(Teacher.email == email, Teacher.language == language_id).first()
+
+
+def set_users(model, db, language=None):
+    data = dict()
+    if model == Teacher:
+        user_list = teachers_list(db, language)
+    if model == Student:
+        user_list = student_list(db)
+    for el in user_list:
+        data[el.email] = el.full_name
+    return data
+
+
+def timetable_list(db, from_date=None, to_date=None):
+    model = Timetable
+    data = list()
+    if from_date is not None:
+        to_date = check_to_date_param(from_date, to_date)
+        timetable = db.query(model).filter(model.day >= from_date, model.day <= to_date).order_by(model.day.asc()).all()
+    else:
+        timetable = db.query(model).order_by(model.day.asc()).all()
+    for el in timetable:
+        data.append((el.day, el.teacher, el.student))
+    return data
+
+
+def schedule_statistics(db, from_date, to_date):
+    classes = timetable_list(db, from_date, to_date)
+    teachers_classes = dict()
+    for el in classes:
+        email = el[1]
+        if email in teachers_classes:
+            teachers_classes[email] += 1
+        else:
+            teachers_classes[email] = 1
+    return teachers_classes

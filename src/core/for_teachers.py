@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from core.logic import find_user_by_email, get_timetable, find_user_by_token, create_teacher, teachers_list, \
-    get_language_id, oauth2_scheme, cancel_lesson, get_teacher_id_by_email_and_lang, delete_by_id
+from core.logic import find_user_by_email, get_timetable, find_user_by_token, create_teacher, oauth2_scheme, \
+    cancel_lesson, get_teacher_by_email_and_lang, delete_by_id
 from db.database import get_db
 from models import Teacher
 from schemas import CreateUserReuest
@@ -25,13 +25,8 @@ def list_of_classes_for_teacher(from_date, to_date=None, db: Session = Depends(g
 def add_language(language, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
     try:
         teacher = find_user_by_token(token, 'teacher', db)
-        id_language = get_language_id(language, db)
-        if id_language is not None:
-            teacher_list = teachers_list(db)
-            for el in teacher_list:
-                if el.email == teacher.email and el.language == id_language:
-                    return "language was previously added for the teacher"
-
+        if get_teacher_by_email_and_lang(teacher.email, language, db) is not None:
+            return "language was previously added for the teacher"
         new_teacher = CreateUserReuest(
             full_name=teacher.full_name,
             email=teacher.email,
@@ -50,8 +45,13 @@ def add_language(language, db: Session = Depends(get_db), token: str = Depends(o
 def remove_language(language, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
     try:
         teacher = find_user_by_token(token, 'teacher', db)
-        teacher_id = get_teacher_id_by_email_and_lang(teacher.email, get_language_id(language, db), db)
-        return delete_by_id(teacher_id, Teacher, db)
+        found_teacher = get_teacher_by_email_and_lang(teacher.email, language, db)
+        if found_teacher is not None:
+            delete_by_id(found_teacher.id, Teacher, db)
+            return {"success": True}
+        else:
+            return "this language was not found"
+
     except Exception as err:
         return err.args
 
