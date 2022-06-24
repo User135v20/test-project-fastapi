@@ -17,7 +17,7 @@ async def create_users(detail: CreateUserReuest, db: Session = Depends(get_db)):
     return add_users(detail, db)
 
 
-@app.post('/token', response_model=Token)
+@app.post('/', response_model=Token, status_code=status.HTTP_201_CREATED)
 async def login(db: Session = Depends(get_db), detail: OAuth2PasswordRequestForm = Depends()):
     try:
         user_and_role_by_email = find_user_by_email(detail.username, db, return_role=True)
@@ -33,61 +33,61 @@ async def login(db: Session = Depends(get_db), detail: OAuth2PasswordRequestForm
         return HTTPException(status_code=401, detail='Invalid email')
 
 
-@app.post('/student/to_book', status_code=status.HTTP_201_CREATED)
+@app.post('/student/to_book', status_code=status.HTTP_201_CREATED, tags=["student"])
 async def make_an_appointments(user: CreateUserReuest = Depends(to_book)):
     return user
 
 
-@app.get('/student/list_of_classes')
+@app.get('/student/list_of_classes', status_code=status.HTTP_200_OK, tags=["student"])
 async def list_of_classes(user: CreateUserReuest = Depends(list_of_classes_for_student)):
     return user
 
 
-@app.delete('/student/cancel_lesson')
+@app.delete('/student/cancel_lesson', status_code=status.HTTP_200_OK, tags=["student"])
 async def cancel_lesson(user: CreateUserReuest = Depends(cancel_a_booked_lesson_student)):
     return user
 
 
-@app.get('/student/free_teacher')
+@app.get('/student/free_teacher', status_code=status.HTTP_200_OK, tags=["student"])
 async def list_of_available_teachers(list_classes: CreateUserReuest = Depends(find_free_teachers)):
     return list_classes
 
 
-@app.get('/teacher/list_of_classes')
+@app.get('/teacher/list_of_classes', status_code=status.HTTP_200_OK, tags=["teacher"])
 async def list_of_available_teachers(list_classes: CreateUserReuest = Depends(list_of_classes_for_teacher)):
     return list_classes
 
 
-@app.post('/teacher/add_language', status_code=status.HTTP_201_CREATED)
+@app.post('/teacher/add_language', status_code=status.HTTP_201_CREATED, tags=["teacher"])
 async def add_languages(result: CreateUserReuest = Depends(add_language)):
     return result
 
 
-@app.delete('/teacher/remove_language')
+@app.delete('/teacher/remove_language', status_code=status.HTTP_200_OK, tags=["teacher"])
 async def remove_languages(result: CreateUserReuest = Depends(remove_language)):
     return result
 
 
-@app.delete('/teacher/cancel_lesson')
+@app.delete('/teacher/cancel_lesson', status_code=status.HTTP_200_OK, tags=["teacher"])
 async def cancel_lesson(result: CreateUserReuest = Depends(cancel_a_booked_lesson_teacher)):
     return result
 
 
-@app.get('/admin/list_teachers')
+@app.get('/admin/list_teachers', status_code=status.HTTP_200_OK, tags=["admin"])
 async def list_teachers(users: CreateUserReuest = Depends(get_list_teachers)):
     return users
 
 
-@app.get('/admin/list_students')
+@app.get('/admin/list_students', status_code=status.HTTP_200_OK, tags=["admin"])
 async def list_teachers(users: CreateUserReuest = Depends(get_list_students)):
     return users
 
 
-@app.get('/admin/books')
-async def list_teachers(data: CreateUserReuest = Depends(get_book_list)):
+@app.get('/admin/books', status_code=status.HTTP_200_OK, tags=["admin"])
+async def list_books(data: CreateUserReuest = Depends(get_book_list)):
     return data
 
 
-@app.get('/admin/statistics')
+@app.get('/admin/statistics', status_code=status.HTTP_200_OK, tags=["admin"])
 async def statistic(data: CreateUserReuest = Depends(teacher_statistic)):
     return data

@@ -9,7 +9,6 @@ class CreateUserReuest(BaseModel):
     password: str
     role: str
     language: Optional[str] = None
-    is_superuser: Optional[bool] = False
 
 
 class AuthModel(BaseModel):

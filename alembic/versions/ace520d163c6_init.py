@@ -9,6 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
+from sqlalchemy import ForeignKey
+
 revision = 'ace520d163c6'
 down_revision = None
 branch_labels = None
@@ -19,7 +21,7 @@ def upgrade():
     op.drop_table('admin')
     op.create_table(
         'admin',
-        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("id", sa.BIGINT(), primary_key=True),
         sa.Column("full_name", sa.String(), nullable=True),
         sa.Column("email", sa.String(), nullable=True),
         sa.Column("password", sa.String(), nullable=True)
@@ -28,7 +30,7 @@ def upgrade():
     op.drop_table('student')
     op.create_table(
         'student',
-        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("id", sa.BIGINT(), primary_key=True),
         sa.Column("full_name", sa.String(), nullable=True),
         sa.Column("email", sa.String(), nullable=True),
         sa.Column("password", sa.String(), nullable=True)
@@ -37,27 +39,35 @@ def upgrade():
     op.drop_table('teacher')
     op.create_table(
         'teacher',
-        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("id", sa.BIGINT(), primary_key=True),
         sa.Column("full_name", sa.String(), nullable=True),
         sa.Column("email", sa.String(), nullable=True),
         sa.Column("password", sa.String(), nullable=True),
-        sa.Column("language", sa.Integer(), nullable=True),
+        sa.Column("skills", sa.BIGINT(), nullable=True),
     )
 
     op.drop_table('timetable')
     op.create_table(
         'timetable',
-        sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("student", sa.Integer(), nullable=True),
-        sa.Column("teacher", sa.Integer(), nullable=True),
+        sa.Column("id", sa.BIGINT(), primary_key=True),
+        sa.Column("student", sa.BIGINT(), ForeignKey("student.id"), nullable=True),
+        sa.Column("teacher", sa.BIGINT(),  ForeignKey("teacher.id"), nullable=True),
         sa.Column("day", sa.Date, nullable=True)
     )
 
     op.drop_table('language')
     op.create_table(
         'language',
-        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("id", sa.BIGINT(), primary_key=True),
         sa.Column("language", sa.String(), nullable=True),
+    )
+
+    op.drop_table('skills')
+    op.create_table(
+        'skills',
+        sa.Column("id", sa.BIGINT(), primary_key=True),
+        sa.Column("teacher", sa.BIGINT, ForeignKey("teacher.id"), nullable=True),
+        sa.Column("language", sa.BIGINT, ForeignKey("language.id"), nullable=True),
     )
 
 
