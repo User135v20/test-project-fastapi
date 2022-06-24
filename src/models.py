@@ -34,6 +34,6 @@ class Language(Base):
 class Timetable(Base):
     __tablename__ = 'timetable'
     id = Column(Integer, primary_key=True)
-    student = Column(String)
-    teacher = Column(String)
+    student = Column(Integer)
+    teacher = Column(Integer)
     day = Column(DateTime)

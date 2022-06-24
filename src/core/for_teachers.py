@@ -1,9 +1,9 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from core.logic import find_user_by_email, get_timetable, find_user_by_token, create_teacher, oauth2_scheme, \
-    cancel_lesson, get_teacher_by_email_and_lang, delete_by_id
+    cancel_lesson, get_teacher_by_email_and_lang, delete_by_id, find_user_by_id
 from db.database import get_db
-from models import Teacher
+from models import Teacher, Student
 from schemas import CreateUserReuest
 
 
@@ -15,7 +15,7 @@ def list_of_classes_for_teacher(from_date, to_date=None, db: Session = Depends(g
             return 'this date is free or these dates are free'
         timetable_res_list = list()
         for el in timetable:
-            student = find_user_by_email(el.student, db, 'student').full_name
+            student = find_user_by_id(el.student, db, Student).full_name
             timetable_res_list.append(str(el.day) + "  " + str(student))
         return timetable_res_list
     except Exception as err:

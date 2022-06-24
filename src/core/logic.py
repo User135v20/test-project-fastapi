@@ -104,30 +104,23 @@ def search(mail: str, md: Base, db: Session):
     return db.query(md).filter(md.email == mail).first()
 
 
-def find_user_and_role_by_email(email: str, db: Session):
-    for value in DICT_ROLE_MODEL_FUNC.values():
-        model = value[1]
-        search_result = search(email, model, db)
-        if search_result is not None:
-            return [search_result, value[0]]
-    return None
-
-
-def find_user_by_email(email: str, db: Session, role=None):
+def find_user_by_email(email: str, db: Session, role=None, return_role=None):
     if role is None:
         for value in DICT_ROLE_MODEL_FUNC.values():
             model = value[1]
             search_result = search(email, model, db)
             if search_result is not None:
-                return search_result
+                return [search_result, value[0]] if return_role is True else search_result
     else:
         model = DICT_ROLE_MODEL_FUNC[role][1]
         search_result = search(email, model, db)
-    return None if search_result is None else search_result
+    return search_result
 
+def find_user_by_id(id: int, db, model):
+    return db.query(model).filter(model.id == id).first()
 
 def teachers_list(db: Session, language=None):
-    model=Teacher
+    model = Teacher
     if language is None:
         search_result = db.query(model).filter(model.language is not None).all()
     else:
@@ -137,7 +130,7 @@ def teachers_list(db: Session, language=None):
 
 
 def student_list(db: Session):
-    model=Student
+    model = Student
     search_result = db.query(model).all()
     return None if search_result is None else search_result
 
@@ -178,15 +171,15 @@ def check_timetable(user, role, db: Session, from_date, to_date=None):
 
 def get_timetable(token, db, role, from_date, to_date):
     user = find_user_by_token(token, role, db)
-    timetable = check_timetable(user.email, role, db, from_date, to_date)
+    timetable = check_timetable(user.id, role, db, from_date, to_date)
     return timetable
 
 
 def cancel_lesson(date, role, db: Session, token: str):
     try:
         dict_user_teacher = {
-            "student": Student.email,
-            "teacher": Teacher.email
+            "student": Student.id,
+            "teacher": Teacher.id
         }
         find_user_by_token(token, role, db)
         timetable = check_timetable(dict_user_teacher.get(role), role, db, from_date=date)
