@@ -1,54 +1,63 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from core.for_admin import get_list_teachers, get_list_students, get_book_list, teacher_statistic
-from core.for_students import to_book, list_of_classes_for_student, find_free_teachers, cancel_a_booked_lesson_student
-from core.for_teachers import list_of_classes_for_teacher, add_language, cancel_a_booked_lesson_teacher, remove_language
-from core.logic import add_users, find_user_by_email, read_from_csv, create_teacher, check_by_name, find_by_name, \
-    get_language_id, check_skills, add_skill, add_language_to_db
+
+from core.Admin import create_admin
+# from core.Commons import find_user_by_email, check_by_name, check_by_email
+# from core.Skills import add_language, remove_language
+# from core.Student import add_student_from_scv_file, get_list_students, create_student
+# from core.Teacher import add_teacher_from_scv_file, get_list_teachers, create_teacher
+# from core.Timetable import to_book, list_of_classes_for_student, cancel_a_booked_lesson_student, find_free_teachers, \
+#     list_of_classes_for_teacher, cancel_a_booked_lesson_teacher, get_book_list, teacher_statistic
+# from core.security import password_verification, create_access_token
+from core.Commons import check_by_name, check_user_by_email, find_user_by_email
+from core.Skills import add_language, remove_language
+from core.Student import create_student, get_list_students, add_student_from_scv_file
+from core.Teacher import create_teacher, get_list_teachers, add_teacher_from_scv_file
+from core.Timetable import to_book, list_of_classes_for_student, cancel_a_booked_lesson_student, find_free_teachers, \
+    list_of_classes_for_teacher, cancel_a_booked_lesson_teacher, get_book_list, teacher_statistic
 from core.security import password_verification, create_access_token
 from db.database import get_db
-from models import Teacher
 from schemas import CreateUserReuest, Token
 
-FILE_NAME = "user.csv"
+TEACHER_FILE = "teacher.csv"
+STUDENT_FILE = "student.csv"
 app = FastAPI()
 
 
-@app.post("/add_csv", status_code=status.HTTP_201_CREATED)
-def add_from_csv(db: Session = Depends(get_db)):
-    count_added = 0
-    count_updated = 0
-    list_result_parse = read_from_csv(FILE_NAME)
-    for el in list_result_parse:
-        full_name = str(el.last_name) + " " + str(el.first_name) + " " + str(el.fatherland)
-        if len(el.language) < 1:
-            language = None
-        else:
-            language = el.language
-        user = CreateUserReuest(
-            full_name=full_name,
-            language=language)
-        if check_by_name(user.full_name, Teacher, db):
-            if not check_skills(user, db):
-                teacher_id = find_by_name(user.full_name, Teacher, db).id
-                language_id = get_language_id(user.language, db)
-                if language_id is None:
-                    language_id = add_language_to_db(language, db)
-                add_skill(db, teacher_id, language_id)
-                count_updated += 1
 
-        else:
-            create_teacher(user, db)
-            count_added += 1
-    return {"success": True,
-            "number of added teachers": count_added,
-            "number of updated teachers": count_updated}
+@app.post("/add_teacher_from_csv", status_code=status.HTTP_201_CREATED)
+def add_from_csv(db: Session = Depends(get_db)):
+    return add_teacher_from_scv_file(TEACHER_FILE, db)
+
+
+@app.post("/add_student_from_csv", status_code=status.HTTP_201_CREATED)
+def add_from_csv(db: Session = Depends(get_db)):
+    return add_student_from_scv_file(STUDENT_FILE, db)
 
 
 @app.post("/auth", status_code=status.HTTP_201_CREATED)
 async def create_users(detail: CreateUserReuest, db: Session = Depends(get_db)):
-    return add_users(detail, db)
+    DICT_ROLE_MODEL_FUNC = \
+        {
+         "admin": create_admin,
+         "student": create_student,
+         "teacher": create_teacher
+         }
+    user_email = detail.email
+    user_name = detail.full_name
+    user_role = detail.role
+    if check_by_name(user_name, db):
+        return 'user with this name already exists'
+    if check_user_by_email(user_email, db):
+        return 'user with this email already exists'
+    try:
+        to_create = DICT_ROLE_MODEL_FUNC.get(user_role)(detail, db)
+        return {
+            "success": True,
+            "id": to_create.id}
+    except Exception as err:
+        return err.args
 
 
 @app.post('/token', response_model=Token, status_code=status.HTTP_201_CREATED)
