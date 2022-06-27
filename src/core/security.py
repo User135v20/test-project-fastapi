@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import re
 from jose import jwt
 from passlib.context import CryptContext
 
@@ -7,9 +8,19 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+def check_password(password):
+    pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$'
+    if re.match(pattern, password) is None:
+        raise Exception('Password has incorrecr format.')
 
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+def hash_password(password: str):
+    if password is None:
+        return None
+    try:
+        check_password(password)
+        return pwd_context.hash(password)
+    except Exception as err:
+        raise err
 
 
 def password_verification(password: str, hash_password: str):

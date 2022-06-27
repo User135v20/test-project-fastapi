@@ -18,6 +18,8 @@ depends_on = None
 
 
 def upgrade():
+    op.drop_table('timetable')
+    op.drop_table('skills')
     op.drop_table('admin')
     op.create_table(
         'admin',
@@ -46,7 +48,7 @@ def upgrade():
         sa.Column("skills", sa.BIGINT(), nullable=True),
     )
 
-    op.drop_table('timetable')
+
     op.create_table(
         'timetable',
         sa.Column("id", sa.BIGINT(), primary_key=True),
@@ -62,7 +64,7 @@ def upgrade():
         sa.Column("language", sa.String(), nullable=True),
     )
 
-    op.drop_table('skills')
+
     op.create_table(
         'skills',
         sa.Column("id", sa.BIGINT(), primary_key=True),

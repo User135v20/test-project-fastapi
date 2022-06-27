@@ -22,8 +22,8 @@ class Teacher(Base):
     __tablename__ = 'teacher'
     id = Column(BIGINT, primary_key=True)
     full_name = Column(String)
-    email = Column(String)
-    password = Column(String)
+    email = Column(String, nullable=True)
+    password = Column(String, nullable=True)
     skills = Column(Integer)
 
 

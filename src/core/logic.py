@@ -1,11 +1,13 @@
+import csv
 from datetime import datetime
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
+from sqlalchemy import exists
 from sqlalchemy.orm import Session
 from core.security import hash_password, ALGORITHM, SECRET_KEY
 from db.database import Base
 from models import Student, Teacher, Admin, Language, Timetable, Skills
-from schemas import CreateUserReuest
+from schemas import CreateUserReuest, UserFromCsv
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -36,16 +38,20 @@ def create_admin(detail: CreateUserReuest, db: Session):
 
 
 def create_student(detail: CreateUserReuest, db: Session):
+    if detail.password is None:
+        password = detail.password
+    else:
+        password = hash_password(detail.password)
     user = Student(
         full_name=detail.full_name,
         email=detail.email,
-        password=hash_password(detail.password)
+        password=password
     )
     add_into_db(user, db)
     return user
 
 
-def get_language_id(language: str, db: Session):
+def get_language_id(language, db: Session):
     search_result = db.query(Language).filter(Language.language == language).first()
     return None if search_result is None else search_result.id
 
@@ -66,25 +72,25 @@ def add_language_to_db(language, db):
 
 
 def create_teacher(detail: CreateUserReuest, db: Session):
+    if detail.password is None:
+        password = detail.password
+    else:
+        password = hash_password(detail.password)
     user = Teacher(
         full_name=detail.full_name,
         email=detail.email,
-        password=hash_password(detail.password),
-        skills=None
+        password=password
     )
     add_into_db(user, db)
-    if detail.language is None:
-        language_id = None
-    else:
-        language_id = get_language_id(detail.language, db)
-        if language_id is None:
-            language_id = add_language_to_db(detail.language, db)
+    language_id = get_language_id(detail.language, db)
+    if language_id is None:
+        language_id = add_language_to_db(detail.language, db)
     user.skills = add_skill(db, user.id, language_id)
     db.commit()
     return user
 
 
-def create_schedule_entry(student: str, teacher: str, day: str, db):
+def create_schedule_entry(student, teacher, day, db):
     data = Timetable(
         student=student,
         teacher=teacher,
@@ -102,24 +108,34 @@ DICT_ROLE_MODEL_FUNC = \
 
 def add_users(detail: CreateUserReuest, db: Session):
     user_email = detail.email
+    user_name = detail.full_name
     user_role = detail.role
 
-    if find_user_by_email(user_email, db) is not None:
-        return 'user with this email already exists'
+    if check_user_by_name_and_email(user_name, user_email, db):
+        return 'user with this email or name already exists'
     try:
         to_create = DICT_ROLE_MODEL_FUNC.get(user_role)[2](detail, db)
         return {
             "success": True,
             "id": to_create.id}
-    except:
-        return 'Failed to signup user'
+    except Exception as err:
+        return err.args
 
 
-def search(mail: str, md: Base, db: Session):
+def read_from_csv(csv_name):
+    with open(csv_name, encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter='\t', skipinitialspace=False)
+        list_result_parse = list()
+        for row in reader:
+            list_result_parse.append(UserFromCsv.parse_obj(row))
+    return list_result_parse
+
+
+def search(mail, md: Base, db: Session):
     return db.query(md).filter(md.email == mail).first()
 
 
-def find_user_by_email(email: str, db: Session, role=None, return_role=None):
+def find_user_by_email(email, db: Session, role=None, return_role=None):
     if role is None:
         for value in DICT_ROLE_MODEL_FUNC.values():
             model = value[1]
@@ -132,12 +148,44 @@ def find_user_by_email(email: str, db: Session, role=None, return_role=None):
     return search_result
 
 
-def find_data_by_id(id: int, db, model):
+def find_by_name(name, model, db):
+    return db.query(model).filter(model.full_name == name).first()
+
+
+def check_by_email(email, model, db):
+    return db.query(exists().where(model.email == email)).scalar()
+
+
+def check_by_name(name, model, db):
+    return db.query(exists().where(model.full_name == name)).scalar()
+
+
+def check_skills(user: Base, db):
+    language_id = get_language_id(user.language, db)
+    teacher_id = find_by_name(user.full_name, Teacher, db).id
+    skills = find_skills(teacher_id, db)
+    for el in skills:
+        if el.language == language_id:
+            return True
+    return False
+
+
+def check_user_by_name_and_email(name, email, db: Session):
+    for value in DICT_ROLE_MODEL_FUNC.values():
+        model = value[1]
+        search_by_email = check_by_email(email, model, db)
+        search_by_name = check_by_name(name, model, db)
+        if search_by_email or search_by_name:
+            return True
+    return False
+
+
+def find_data_by_id(id, db, model):
     return db.query(model).filter(model.id == id).first()
 
 
-def find_skills(teacher, db):
-    return db.query(Skills).filter(Skills.teacher == teacher).all()
+def find_skills(teacher_id, db):
+    return db.query(Skills).filter(Skills.teacher == teacher_id).all()
 
 
 def teachers_list(db: Session, language=None):
@@ -158,7 +206,7 @@ def student_list(db: Session):
     return None if search_result is None else search_result
 
 
-def find_user_by_token(token: str, role, db: Session):
+def find_user_by_token(token, role, db: Session):
     payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
     try:
         checking_for_access_rights(token, role)
@@ -198,7 +246,7 @@ def get_timetable(token, db, role, from_date, to_date):
     return timetable
 
 
-def cancel_lesson(date, role, db: Session, token: str):
+def cancel_lesson(date, role, db: Session, token):
     try:
         dict_user_teacher = {
             "student": Student.id,
