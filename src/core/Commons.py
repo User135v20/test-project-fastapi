@@ -7,11 +7,11 @@ from db.database import Base
 from models import Admin, Student, Teacher
 from schemas import UserFromCsv
 
-DICT_ROLE_MODEL = \
-    {"admin": ["admin", Admin],
-     "student": ["student", Student],
-     "teacher": ["teacher", Teacher]
-     }
+DICT_ROLE_MODEL = {
+    "admin": ["admin", Admin],
+    "student": ["student", Student],
+    "teacher": ["teacher", Teacher],
+}
 
 
 def add_into_db(data: Base, db_connect):
@@ -46,9 +46,10 @@ def check_by_name_and_model(name, model, db_connect):
 
 
 def check_to_date_param(from_date, to_date):
-    if to_date is not None and \
-            datetime.strptime(to_date, '%Y-%m-%d') < datetime.strptime(from_date, '%Y-%m-%d'):
-        raise Exception('invalid to_date parameter')
+    if to_date is not None and datetime.strptime(
+        to_date, "%Y-%m-%d"
+    ) < datetime.strptime(from_date, "%Y-%m-%d"):
+        raise Exception("invalid to_date parameter")
     return from_date if to_date is None else to_date
 
 
@@ -81,7 +82,9 @@ def find_user_by_email(email, db_connect, role=None, return_role=None):
             model = value[1]
             search_result = search(email, model, db_connect)
             if search_result is not None:
-                return [search_result, value[0]] if return_role is True else search_result
+                return (
+                    [search_result, value[0]] if return_role is True else search_result
+                )
     else:
         model = DICT_ROLE_MODEL[role][1]
         search_result = search(email, model, db_connect)
@@ -103,8 +106,8 @@ def create_full_name(obj: UserFromCsv):
 
 
 def read_from_csv(csv_name):
-    with open(csv_name, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile, delimiter='\t')
+    with open(csv_name, newline="", encoding="utf-8") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter="\t")
         list_result_parse = []
         for row in reader:
             list_result_parse.append(UserFromCsv.parse_obj(row))

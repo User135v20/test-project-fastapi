@@ -1,7 +1,12 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from core.Commons import add_into_db, find_data_by_id, read_from_csv, \
-    create_full_name, check_by_name
+from core.Commons import (
+    add_into_db,
+    find_data_by_id,
+    read_from_csv,
+    create_full_name,
+    check_by_name,
+)
 from core.Language import get_language_id, add_language_to_db
 from core.Skills import add_skill_in_db, add_skills
 from core.security import hash_password, oauth2_scheme, checking_for_access_rights
@@ -15,11 +20,7 @@ def create_teacher(detail: CreateUserReuest, db_connect):
         password = detail.password
     else:
         password = hash_password(detail.password)
-    user = Teacher(
-        full_name=detail.full_name,
-        email=detail.email,
-        password=password
-    )
+    user = Teacher(full_name=detail.full_name, email=detail.email, password=password)
     add_into_db(user, db_connect)
     language_id = get_language_id(detail.language, db_connect)
     if language_id is None:
@@ -41,10 +42,11 @@ def teachers_list(db_connect, language=None):
     return res_list
 
 
-def get_teachers_for_admin(db_connect: Session = Depends(get_db),
-                           token: str = Depends(oauth2_scheme)):
+def get_teachers_for_admin(
+    db_connect: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+):
     try:
-        checking_for_access_rights(token, 'admin')
+        checking_for_access_rights(token, "admin")
         res_list = []
         for teacher in teachers_list(db_connect):
             res_list.append(teacher.full_name)
@@ -64,15 +66,15 @@ def add_teacher_from_scv_file(file_name, db_connect):
             language = None
         else:
             language = raw_str_teacher.language
-        user = CreateUserReuest(
-            full_name=full_name,
-            language=language)
+        user = CreateUserReuest(full_name=full_name, language=language)
         if check_by_name(user.full_name, db_connect):
             if add_skills(user, language, db_connect) is not None:
                 count_updated += 1
         else:
             create_teacher(user, db_connect)
             count_added += 1
-    return {"success": True,
-            "number of added teachers": count_added,
-            "number of updated teachers": count_updated}
+    return {
+        "success": True,
+        "number of added teachers": count_added,
+        "number of updated teachers": count_updated,
+    }

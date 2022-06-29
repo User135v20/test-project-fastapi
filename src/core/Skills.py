@@ -13,10 +13,7 @@ def find_skills(teacher_id, db_connect):
 
 
 def add_skill_in_db(db_connect, teacher_id, language_id):
-    data = Skills(
-        teacher=teacher_id,
-        language=language_id
-    )
+    data = Skills(teacher=teacher_id, language=language_id)
     add_into_db(data, db_connect)
     return data.id
 
@@ -24,9 +21,9 @@ def add_skill_in_db(db_connect, teacher_id, language_id):
 def check_skills(teacher_id, language_id, db_connect):
     if teacher_id is None or language_id is None:
         return False
-    return db_connect.query(exists().
-                            where(Skills.teacher == teacher_id,
-                                  Skills.language == language_id)).scalar()
+    return db_connect.query(
+        exists().where(Skills.teacher == teacher_id, Skills.language == language_id)
+    ).scalar()
 
 
 def add_skills(user, language, db_connect):
@@ -40,22 +37,22 @@ def add_skills(user, language, db_connect):
             return add_skill_in_db(db_connect, teacher_id, language_id)
 
 
-def add_language_by_teacher(language, db_connect: Session = Depends(get_db),
-                            token: str = Depends(oauth2_scheme)):
+def add_language_by_teacher(
+    language, db_connect: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+):
     try:
         teacher = find_user_by_token(token, db_connect)
         skill_id = add_skills(teacher, language, db_connect)
         if skill_id is None:
             return "language was previously added for the teacher"
-        return {
-            "success": True,
-            "skill id": skill_id}
+        return {"success": True, "skill id": skill_id}
     except Exception as err:
         return err.args
 
 
-def remove_language_by_teacher(language, db_connect: Session = Depends(get_db),
-                               token: str = Depends(oauth2_scheme)):
+def remove_language_by_teacher(
+    language, db_connect: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+):
     try:
         teacher_id = find_user_by_token(token, db_connect).id
         language_id = get_language_id(language, db_connect)
@@ -63,8 +60,7 @@ def remove_language_by_teacher(language, db_connect: Session = Depends(get_db),
         for skill in skills:
             if language_id == skill.language:
                 delete_by_id(skill.id, Skills, db_connect)
-                return {"success": True
-                        }
+                return {"success": True}
         return "this language was not found"
     except Exception as err:
         return err.args

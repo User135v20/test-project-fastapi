@@ -13,9 +13,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def check_password(password):
-    pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$'
+    pattern = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$"
     if re.match(pattern, password) is None:
-        raise HTTPException(status_code=401, detail='Password has incorrect format')
+        raise HTTPException(status_code=401, detail="Password has incorrect format")
 
 
 def hash_password(password: str):
@@ -34,7 +34,7 @@ def password_verification(password: str, users_hash_password: str):
 
 def checking_for_access_rights(token, role):
     if role != jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM).get("role"):
-        raise HTTPException(status_code=401, detail='user does not have access rights')
+        raise HTTPException(status_code=401, detail="user does not have access rights")
 
 
 def create_access_token(data: dict):
