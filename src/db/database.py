@@ -9,9 +9,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
-    except:
+    except Exception as err:
         db.close()
+        return err

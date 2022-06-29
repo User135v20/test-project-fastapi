@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, BIGINT
+from sqlalchemy import Column, Integer, String, DateTime, BIGINT, ForeignKey
 from db.database import Base
 
 
@@ -27,22 +27,22 @@ class Teacher(Base):
     skills = Column(Integer)
 
 
-class Skills(Base):
-    __tablename__ = 'skills'
+class Timetable(Base):
+    __tablename__ = 'timetable'
     id = Column(BIGINT, primary_key=True)
-    teacher = Column(BIGINT)
-    language = Column(Integer)
+    student = Column(Integer, ForeignKey("student.id"))
+    teacher = Column(Integer, ForeignKey("teacher.id"))
+    day = Column(DateTime)
 
 
 class Language(Base):
     __tablename__ = 'language'
     id = Column(BIGINT, primary_key=True)
-    language = Column(String)
+    language = Column(String, nullable=True)
 
 
-class Timetable(Base):
-    __tablename__ = 'timetable'
+class Skills(Base):
+    __tablename__ = 'skills'
     id = Column(BIGINT, primary_key=True)
-    student = Column(Integer)
-    teacher = Column(Integer)
-    day = Column(DateTime)
+    teacher = Column(BIGINT, ForeignKey("teacher.id"))
+    language = Column(Integer, ForeignKey("language.id"))
