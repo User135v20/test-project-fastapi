@@ -5,7 +5,7 @@ from core.Commons import (
     find_data_by_id,
     read_from_csv,
     create_full_name,
-    check_by_name,
+    check_by_name, find_by_name, delete_by_id,
 )
 from core.Language import get_language_id, add_language_to_db
 from core.Skills import add_skill_in_db, add_skills
@@ -28,6 +28,12 @@ def create_teacher(detail: CreateUserReuest, db_connect):
     user.skills = add_skill_in_db(db_connect, user.id, language_id)
     db_connect.commit()
     return user
+
+
+def delete_teacher(name, db_connect: Session):
+    user = find_by_name(name, Teacher, db_connect)
+    delete_by_id(user.id, Teacher, db_connect)
+    return {"success": "True"}
 
 
 def teachers_list(db_connect, language=None):

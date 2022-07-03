@@ -1,6 +1,6 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from core.Commons import add_into_db, check_by_name, read_from_csv, create_full_name
+from core.Commons import add_into_db, check_by_name, read_from_csv, create_full_name, find_by_name, delete_by_id
 from core.security import oauth2_scheme, hash_password, checking_for_access_rights
 from db.database import get_db
 from models import Student
@@ -15,6 +15,11 @@ def create_student(detail: CreateUserReuest, db_connect):
     user = Student(full_name=detail.full_name, email=detail.email, password=password)
     add_into_db(user, db_connect)
     return user
+
+
+def delete_student(id_user, db_connect):
+    delete_by_id(id_user, Student, db_connect)
+    return {"success": "True"}
 
 
 def student_list(db_connect):

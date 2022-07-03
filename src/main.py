@@ -1,3 +1,4 @@
+import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -7,7 +8,7 @@ from core.Skills import add_language_by_teacher, remove_language_by_teacher
 from core.Student import (
     create_student,
     add_student_from_scv_file,
-    get_students_for_admin,
+    get_students_for_admin, delete_student,
 )
 from core.Teacher import (
     create_teacher,
@@ -52,10 +53,10 @@ async def create_users(detail: CreateUserReuest, db_connect: Session = Depends(g
         to_create = dict_role_func.get(user_role)(detail, db_connect)
         return {"success": True, "id": to_create.id}
     except Exception as err:
-        return err.args
+        raise err
 
 
-@app.post("/token", response_model=Token, status_code=status.HTTP_201_CREATED)
+@app.post("/token", response_model=Token, status_code=status.HTTP_200_OK)
 async def login(
     db_connect: Session = Depends(get_db), detail: OAuth2PasswordRequestForm = Depends()
 ):
@@ -76,7 +77,13 @@ async def login(
             "token_type": "bearer",
         }
     except HTTPException:
-        return HTTPException(status_code=401, detail="Invalid email")
+        raise HTTPException(status_code=401, detail="Invalid email")
+
+
+@app.delete("/delete_user/student/", status_code=status.HTTP_200_OK)
+async def delete_student_user(id_user, db_connect: Session = Depends(get_db)):
+    """delete student by id"""
+    return delete_student(id_user, db_connect)
 
 
 @app.post(
@@ -101,7 +108,7 @@ async def make_an_appointments(user: CreateUserReuest = Depends(to_book)):
     try:
         return user
     except Exception as err:
-        return err
+        raise err
 
 
 @app.get("/student/list_of_classes", status_code=status.HTTP_200_OK, tags=["student"])
@@ -125,11 +132,7 @@ async def list_of_available_teachers(
     list_classes: CreateUserReuest = Depends(find_free_teachers),
 ):
     """list_of_available_teachers"""
-    try:
-        return list_classes
-    except Exception as err:
-        return err
-
+    return list_classes
 
 @app.get("/teacher/list_of_classes", status_code=status.HTTP_200_OK, tags=["teacher"])
 async def list_teachers_classes(
@@ -187,3 +190,7 @@ async def list_books(timetable: CreateUserReuest = Depends(get_book_list)):
 async def statistic(data: CreateUserReuest = Depends(teacher_statistic_for_admin)):
     """returns lesson statistics for teachers"""
     return data
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, port=8000)

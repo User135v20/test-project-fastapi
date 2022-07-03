@@ -25,7 +25,7 @@ def delete_in_db(data, db_connect):
 
 
 def delete_by_id(data_id, model, db_connect):
-    db_connect.query(model).filter_by(id=data_id).delete(synchronize_session=False)
+    db_connect.query(model).filter_by(id=data_id).delete()
     db_connect.commit()
 
 

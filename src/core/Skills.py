@@ -3,7 +3,7 @@ from sqlalchemy import exists
 from sqlalchemy.orm import Session
 from core.Commons import add_into_db, find_by_name, delete_by_id, find_user_by_token
 from core.Language import get_language_id, add_language_to_db
-from core.security import oauth2_scheme
+from core.security import oauth2_scheme, checking_for_access_rights
 from db.database import get_db
 from models import Skills, Teacher
 
@@ -41,19 +41,21 @@ def add_language_by_teacher(
     language, db_connect: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
 ):
     try:
+        checking_for_access_rights(token, "teacher")
         teacher = find_user_by_token(token, db_connect)
         skill_id = add_skills(teacher, language, db_connect)
         if skill_id is None:
             return "language was previously added for the teacher"
         return {"success": True, "skill id": skill_id}
     except Exception as err:
-        return err.args
+        raise err
 
 
 def remove_language_by_teacher(
     language, db_connect: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
 ):
     try:
+        checking_for_access_rights(token, "teacher")
         teacher_id = find_user_by_token(token, db_connect).id
         language_id = get_language_id(language, db_connect)
         skills = find_skills(teacher_id, db_connect)
@@ -63,4 +65,4 @@ def remove_language_by_teacher(
                 return {"success": True}
         return "this language was not found"
     except Exception as err:
-        return err.args
+        raise err

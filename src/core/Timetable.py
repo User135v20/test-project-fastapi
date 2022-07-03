@@ -100,6 +100,7 @@ def list_of_classes_for_teacher(
     token: str = Depends(oauth2_scheme),
 ):
     try:
+        checking_for_access_rights(token, "teacher")
         timetable = get_timetable(token, db_connect, "teacher", from_date, to_date)
         if len(timetable) < 1:
             return "this date is free or these dates are free"
@@ -109,7 +110,7 @@ def list_of_classes_for_teacher(
             timetable_res_list.append(str(lesson.day) + "  " + str(student))
         return timetable_res_list
     except HTTPException as err:
-        return err
+        raise err
 
 
 def list_of_classes_for_student(
@@ -151,7 +152,10 @@ def cancel_lesson(date, role, db_connect: Session, token):
 def cancel_lesson_by_teacher(
     date, db_connect: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
 ):
-    return cancel_lesson(date, "teacher", db_connect, token)
+    try:
+        return cancel_lesson(date, "teacher", db_connect, token)
+    except Exception as err:
+        raise err
 
 
 def cancel_lesson_by_student(
